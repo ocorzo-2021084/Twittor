@@ -68,11 +68,13 @@ const camara = new Camara($("#player")[0]);
 
 // ===== Codigo de la aplicación
 
-function crearMensajeHTML(mensaje, personaje, lat, lng) {
+function crearMensajeHTML(mensaje, personaje, lat, lng, foto) {
   // console.log(mensaje, personaje, lat, lng);
 
   var content = `
     <li class="animated fadeIn fast"
+        data-user="${personaje}"
+        data-mensake="${mensaje}"
         data-tipo="mensaje">
 
 
@@ -86,12 +88,12 @@ function crearMensajeHTML(mensaje, personaje, lat, lng) {
                 ${mensaje}
                 `;
 
-  // if (foto) {
-  //   content += `
-  //               <br>
-  //               <img class="foto-mensaje" src="${foto}">
-  //       `;
-  // }
+  if (foto) {
+    content += `
+                <br>
+                <img class="foto-mensaje" src="${foto}">
+        `;
+  }
 
   content += `</div>        
                 <div class="arrow"></div>
@@ -218,6 +220,7 @@ postBtn.on("click", function () {
     user: usuario,
     lat: lat,
     lng: lng,
+    foto: foto,
   };
 
   fetch("api", {
@@ -233,7 +236,7 @@ postBtn.on("click", function () {
 
   contenedorCamara.addClass("oculto");
 
-  crearMensajeHTML(mensaje, usuario, lat, lng);
+  crearMensajeHTML(mensaje, usuario, lat, lng, foto);
 
   foto = null;
 });
@@ -425,6 +428,44 @@ btnPhoto.on("click", () => {
 // Boton para tomar la foto
 btnTomarFoto.on("click", () => {
   console.log("Botón tomar foto");
+
+  foto = camara.tomarFoto();
+
+  camara.apagar();
+
+  console.log(foto);
 });
 
 // Share API
+
+if (navigator.share) {
+  console.log("Soporta");
+} else {
+  console.log("No soporta");
+}
+
+timeline.on("click", "li", function () {
+  console.log($(this).data("tipo"));
+  console.log($(this).data("user"));
+
+  let tipo = $(this).data("tipo");
+  let mensaje = $(this).data("mensaje");
+  let lat = $(this).data("lat");
+  let lng = $(this).data("lng");
+  let user = $(this).data("user");
+
+  const shareOpts = {
+    title: user,
+    text: mensaje,
+  };
+
+  if (tipo === "mapa") {
+    shareOpts.text = "Mapa";
+    shareOpts.url = `https://www.google.com/maps/@${lat},${lng},15z`;
+  }
+
+  navigator
+    .share(shareOpts)
+    .then(() => console.log("Successful share"))
+    .catch((error) => console.log("Error sharing", error));
+});
